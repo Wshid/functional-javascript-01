@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HTML 출력해보기 - 장바구니</title>
+    <script src="1/lib/fx.js"></script>
+</head>
+
+<body>
+
+    <div id="cart">
+    </div>
+
+    <script>
+        const products = [
+            { name: '반팔티', price: 15000, quantity: 1, is_selected: true },
+            { name: '긴팔티', price: 20000, quantity: 2, is_selected: false },
+            { name: '핸드폰케이스', price: 15000, quantity: 3, is_selected: true },
+            { name: '후드티', price: 30000, quantity: 4, is_selected: false },
+            { name: '바지', price: 25000, quantity: 5, is_selected: false }
+        ];
+
+        // 수량 뽑아내기
+        // const total_quantity =
+        //     products => go(products,
+        //         map(p => p.quantity)
+        //         , reduce((a, b) => a + b)
+        //         , log);
+        // 위 아래 동일한 함수, products => go(products, ... )로 시작하는 부분을 pipe로 치환
+        // const total_quantity =
+        //     pipe(
+        //         map(p => p.quantity)
+        //         , reduce((a, b) => a + b)
+        //         , log);
+        // log(total_quantity(products));
+
+        // const total_price = pipe(
+        //     map(p => p.price * p.quantity),
+        //     reduce((a,b) => a+b)
+        // );
+
+        // (a,b) => a+b를 추상화 한다.
+        const add = (a, b) => a + b;
+        // const total_quantity =
+        //     pipe(
+        //         map(p => p.quantity)
+        //         , reduce(add)
+        //         , log);
+        // log(total_quantity(products));
+
+        // const total_price =
+        //     pipe(
+        //         map(p => p.price * p.quantity),
+        //         reduce(add)
+        //     );
+
+        // 더 추상화 레벨 높이기, map, reduce(add) 함수를
+        // products 뿐만 아닌, 타 도메인에서 사용가능하도록 올리기
+        // 이와같이 f,iter를 받아 go로 처리
+        const sum = (f, iter) => go(
+            iter
+            , map(f)
+            , reduce(add)
+        );
+        log(sum(p => p.quantity, products));
+
+        const total_quantity = products => sum(p => p.products, products);
+        const total_price = products => sum(p => p.price * p.quantity, products);
+
+        //curry로 변화 시킨다.
+        const sum_curry =
+            curry(
+                (f, iter) => go(
+                    iter
+                    , map(f)
+                    , reduce(add)
+                ));
+        //const total_quantity_curry = products => sum(p => producst)(products);
+        const total_quantity_curry = sum(p => p.products);
+    </script>
+
+</body>
+
+</html>

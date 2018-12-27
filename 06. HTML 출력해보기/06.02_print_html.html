@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>HTML 출력해보기 - 장바구니</title>
+    <script src="1/lib/fx.js"></script>
+</head>
+
+<body>
+
+    <div id="cart">
+    </div>
+
+    <script>
+        const products = [
+            { name: '반팔티', price: 15000, quantity: 1, is_selected: true },
+            { name: '긴팔티', price: 20000, quantity: 2, is_selected: false },
+            { name: '핸드폰케이스', price: 15000, quantity: 3, is_selected: true },
+            { name: '후드티', price: 30000, quantity: 4, is_selected: false },
+            { name: '바지', price: 25000, quantity: 5, is_selected: false }
+        ];
+
+        const add = (a, b) => a + b;
+        //curry로 변화 시킨다.
+        const sum_curry =
+            curry(
+                (f, iter) => go(
+                    iter
+                    , map(f)
+                    , reduce(add)
+                ));
+        //const total_quantity_curry = products => sum(p => producst)(products);
+        const total_quantity_curry = sum_curry(p => p.quantity);
+        const total_price_curry = sum_curry(p => p.price * p.quantity);
+
+        /**
+         * 변경 이전, 1차 코드
+         * */
+        // document.querySelector('#cart').innerHTML = `
+        //     <table>
+        //         <tr>
+        //             <th>상품 이름</th>
+        //             <th>가격</th>
+        //             <th>수량</th>
+        //             <th>총 가격</th>
+        //         </tr>
+        //         ${go(products // sum_curry 와 같은 (map, reduce) 형태이기 때문에 추상화가 가능하다.
+        //     , map(p => `
+        //                 <tr>
+        //                     <td>${p.name}</td>
+        //                     <td>${p.price}</td>
+        //                     <td><input type="number" value="${p.quantity}"></td>
+        //                     <td>${p.price * p.quantity}</td>
+        //                 </tr>
+        //             `)
+        //     , reduce(add) // 배열의 형태를 하나의 문자열 형태로 더한다.
+        // )}
+        //         <tr>
+        //             <td colspan="2">합계</td>
+        //             <td>${total_quantity_curry(products)}</td>
+        //             <td>${total_price_curry(products)}</td>
+        //         </tr>
+        //     </table>
+        // `;
+
+        /**
+         * 변경 이후, 2차 코드 
+         * innerHTML을 두번 사용하면, 단순히 값이 append 된다.
+         * */
+        document.querySelector('#cart').innerHTML = `
+            <table>
+                <tr>
+                    <th>상품 이름</th>
+                    <th>가격</th>
+                    <th>수량</th>
+                    <th>총 가격</th>
+                </tr>
+                ${go(products // add 와 같은 (map, reduce) 형태이기 때문에 추상화가 가능하다.
+            , map(p => `
+                        <tr>
+                            <td>${p.name}</td>
+                            <td>${p.price}</td>
+                            <td><input type="number" value="${p.quantity}"></td>
+                            <td>${p.price * p.quantity}</td>
+                        </tr>
+                    `)
+            , reduce(add) // 배열의 형태를 하나의 문자열 형태로 더한다.
+        )}
+
+                ${
+            go(products, sum_curry(p => `
+                        <tr>
+                            <td><input type="checkbox" ${p.is_selected?'checked':''}></td>
+                            <td>${p.name}</td>
+                            <td>${p.price}</td>
+                            <td><input type="number" value="${p.quantity}"></td>
+                            <td>${p.price * p.quantity}</td>
+                        </tr>
+                    `
+            ))}
+                <tr>
+                    <td colspan="3"  >합계</td>
+                    <td>${total_quantity_curry(products.filter(p => p.is_selected))}</td>
+                    <td>${total_price_curry(filter(p => p.is_selected, products))}</td>
+                </tr>
+            </table>
+        `;
+    </script>
+
+</body>
+
+</html>
