@@ -3,23 +3,52 @@ const log = console.log;
 const curry = f =>
     (a, ..._) => _.length ? f(a, ..._) : (..._) => f(a, ..._);
 
- const reduce = curry((f, acc, iter) => {
+const reduce = curry((f, acc, iter) => {
     if (!iter) {
-      iter = acc[Symbol.iterator]();
-      acc = iter.next().value;
+        iter = acc[Symbol.iterator]();
+        acc = iter.next().value;
     } else {
-      iter = iter[Symbol.iterator]();
+        iter = iter[Symbol.iterator]();
     }
     let cur;
     while (!(cur = iter.next()).done) {
-      const a = cur.value;
-      acc = f(acc, a);
+        const a = cur.value;
+        acc = f(acc, a);
     }
     return acc;
-  });
+});
+
+
+// const filter = curry((f, iter) => {
+//     let res = [];
+//     for (const a of iter) {
+//         if (f(a)) res.push(a);
+//     }
+//     return res;
+// });
+
+const filter = curry((f, iter) => {
+    // log("in filter");
+    // log(f, iter);
+    // let res = [];
+    // for (const a of iter) {
+    //     if (f(a)) res.push(a);
+    // }
+    // return res;
+    iter = iter[Symbol.iterator]();
+    let res = [];
+    let cur;
+    while (!(cur = iter.next()).done) {
+        const a = cur.value;
+        if (f(a)) res.push(a);
+    }
+    return res;
+});
+
+
 const go = (...args) => {
-    log("in go");
-    log(...args);
+    // log("in go");
+    // log(...args);
     return reduce((a, f) => f(a), args);
 }
 const pipe = (f, ...fs) => (...as) => go(f(...as), ...fs);
@@ -31,6 +60,15 @@ const map = curry((f, iter) => {
     while (!(cur = iter.next()).done) {
         const a = cur.value;
         res.push(f(a));
+    }
+    return res;
+});
+
+const take = curry((l, iter) => {
+    let res = [];
+    for (const a of iter) {
+        if (res.length == l) break;
+        res.push(a);
     }
     return res;
 });
@@ -87,8 +125,11 @@ let L = {}
  * curry를 하지 않으면, 인자를 처리하지 못한다는 에러 발생
  */
 L.map = curry(function* (f, iter) {
-    iter = iter[Symbol.iterator]();
     for (const a of iter) yield f(a);
+});
+
+L.filter = curry(function* (f, iter) {
+    for (const a of iter) if (f(a)) yield a;
 });
 
 L.entries = function* (obj) {
@@ -108,3 +149,52 @@ const lazy_queryStr = pipe(
 );
 
 log(lazy_queryStr({ limit: 10, offset: 10, type: 'notice' }));
+
+/**
+ * 08.03 take, find
+ *  find함수는 take 함수를 응용하여 만들 수 있다.
+ *  find : 특정 조건을 만족하는 원소를 골라내기
+ */
+const users = [
+    { age: 32 }
+    , { age: 31 }
+    , { age: 37 }
+    , { age: 28 }
+    , { age: 25 }
+    , { age: 32 }
+    , { age: 31 }
+    , { age: 37 }
+];
+
+/**
+ * 특정 값을 꺼내오는 함수
+ * 한개의 결과만 꺼내도, 그 전에 모든 연산을 하게 한다.
+ * 비효율적
+ * @param {*} f 
+ * @param {*} iter 
+ */
+const find = (f, iter) => go(
+    iter
+    , filter(f)
+    , take(1)
+    , ([a]) => a // 배열에서 값을 꺼내기
+);
+
+/**
+ * lazy Filter를 이용하여
+ * 지연 판단을 할 수 있도록 한다.
+ */
+L.find = curry((f, iter) => go(
+    iter
+    , L.filter(f)
+    , take(1)
+    , ([a]) => a // 구조분해, 배열에서 값을 꺼내기
+));
+
+log("find test")
+log(L.find(u => u.age < 30)(users));
+
+go(users
+    , L.map(u => u.age)
+    , L.find(n => n < 30)
+    , log);
